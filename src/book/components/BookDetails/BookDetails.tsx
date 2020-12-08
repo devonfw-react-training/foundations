@@ -1,34 +1,80 @@
-import React from "react";
+import React, { Component, SyntheticEvent } from "react";
 import { Book } from "../../Book";
 import styles from "./BookDetails.module.scss";
 
 export interface Props {
   book: Book;
+  onBookChange?: (book: Book) => void;
 }
 
-export const BookDetails = (props: Props) => (
-  <div className={styles.form}>
-    <form>
-      <div className="form-group row">
-        <label htmlFor="authors" className="col-sm-3 col-form-label">
-          Authors:
-        </label>
-        <div className="col-sm-9">
-          <p className="form-control-plaintext" id="authors">
-            {props.book.authors}
-          </p>
-        </div>
+interface State extends Book {}
+
+export class BookDetails extends Component<Props, State> {
+  state: State = {
+    ...this.props.book,
+  };
+
+  updateTitleValue = (event: SyntheticEvent) => {
+    const title = getValueFromInputChangeEvent(event);
+    this.setState({ title });
+  };
+
+  updateAuthorsValue = (event: SyntheticEvent) => {
+    const authors = getValueFromInputChangeEvent(event);
+    this.setState({ authors });
+  };
+
+  notifyOnBookChange = (event: SyntheticEvent) => {
+    event.preventDefault();
+    if (this.props.onBookChange) {
+      this.props.onBookChange({ ...this.state });
+    }
+  };
+
+  render(): React.ReactNode {
+    return (
+      <div className={styles.form}>
+        <form onSubmit={this.notifyOnBookChange}>
+          <div className="form-group row">
+            <label htmlFor="authors" className="col-sm-3 col-form-label">
+              Authors:
+            </label>
+            <div className="col-sm-9">
+              <input
+                id="authors"
+                type="text"
+                className="form-control"
+                value={this.state.authors}
+                onChange={this.updateAuthorsValue}
+              />
+            </div>
+          </div>
+          <div className="form-group row">
+            <label htmlFor="title" className="col-sm-3 col-form-label">
+              Title:
+            </label>
+            <div className="col-sm-9">
+              <input
+                id="title"
+                type="text"
+                className="form-control"
+                value={this.state.title}
+                onChange={this.updateTitleValue}
+              />
+            </div>
+          </div>
+          <div className="form-group row">
+            <div className="offset-sm-3 col-sm-9">
+              <button className="btn btn-primary">Apply</button>
+            </div>
+          </div>
+        </form>
       </div>
-      <div className="form-group row">
-        <label htmlFor="title" className="col-sm-3 col-form-label">
-          Title:
-        </label>
-        <div className="col-sm-9">
-          <p className="form-control-plaintext" id="title">
-            {props.book.title}
-          </p>
-        </div>
-      </div>
-    </form>
-  </div>
-);
+    );
+  }
+}
+
+function getValueFromInputChangeEvent(event: SyntheticEvent) {
+  const inputElement = event.target as HTMLInputElement;
+  return inputElement.value;
+}

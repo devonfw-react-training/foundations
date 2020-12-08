@@ -40,6 +40,17 @@ export class BookOverview extends Component<Props, State> {
     return book === this.state.selectedBook;
   }
 
+  updateBook = (bookToUpdate: Book) => {
+    this.setState((state) => {
+      return {
+        books: state.books.map((book) =>
+          book.id === bookToUpdate.id ? bookToUpdate : book,
+        ),
+        selectedBook: bookToUpdate,
+      };
+    });
+  };
+
   render(): ReactNode {
     return (
       <div className="container">
@@ -70,7 +81,11 @@ export class BookOverview extends Component<Props, State> {
           </div>
           <div className="col-md-4 col-12">
             {this.state.selectedBook && (
-              <BookDetails book={this.state.selectedBook} />
+              <BookDetails
+                key={this.state.selectedBook.id}
+                book={this.state.selectedBook}
+                onBookChange={this.updateBook}
+              />
             )}
           </div>
         </div>

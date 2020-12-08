@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom";
-import { mount, shallow, ShallowWrapper } from "enzyme";
+import { mount, ReactWrapper, shallow, ShallowWrapper } from "enzyme";
 import { BookOverview } from "./BookOverview";
 
 describe("Book Overview Component", () => {
@@ -106,7 +106,37 @@ describe("Book Overview Component", () => {
     johnExampleRow.simulate("click");
     // then
     const bookDetails = wrapper.find("div.row > div").at(1);
-    expect(bookDetails.find("p#authors")).toHaveText(books[0].authors);
-    expect(bookDetails.find("p#title")).toHaveText(books[0].title);
+
+    const authors = bookDetails.find("input#authors");
+    const title = bookDetails.find("input#title");
+    expect(authors.prop("value")).toBe(books[0].authors);
+    expect(title.prop("value")).toBe(books[0].title);
+  });
+
+  it("updates a book row upon changes done in the details", () => {
+    // given
+    const wrapper = mount(<BookOverview />);
+    // select the first row
+    const johnExampleRow = findFirstTableRowFrom(wrapper);
+    johnExampleRow.simulate("click");
+    // update authors in the details
+    const bookDetails = wrapper.find("div.row > div").at(1);
+    const authors = bookDetails.find("input#authors");
+    const newAuthor = "New Author";
+    authors.simulate("change", { target: { value: newAuthor } });
+    const form = bookDetails.find("form");
+    // when
+    form.simulate("submit", { preventDefault: jest.fn() });
+    // then
+    const updatedFirstRow = findFirstTableRowFrom(wrapper);
+    const authorsTableCell = updatedFirstRow.find("td").at(0);
+    expect(authorsTableCell).toHaveText(newAuthor);
+
+    const titleTableCell = updatedFirstRow.find("td").at(1);
+    expect(titleTableCell).toHaveText(books[0].title);
+
+    function findFirstTableRowFrom(wrapper: ReactWrapper) {
+      return wrapper.find("table tbody tr").at(0);
+    }
   });
 });
