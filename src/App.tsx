@@ -1,9 +1,9 @@
 import React from "react";
-import { BookDetails } from "./book/components/BookDetails/BookDetails";
+import { BookOverview } from "./book/components/BookOverview/BookOverview";
 import styles from "./App.module.scss";
 
 export const App = () => (
   <div className={styles.container}>
-    <BookDetails />
+    <BookOverview />
   </div>
 );
