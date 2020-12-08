@@ -1,35 +1,40 @@
 import React, { Component, ReactNode } from "react";
 import { Book } from "../../Book";
 import { BookDetails } from "../BookDetails/BookDetails";
+import { connect } from "react-redux";
+import { ReduxState } from "../../../store/store";
+import { actions } from "../../../store/book/actions";
 
-export interface Props {}
+export interface Props {
+  books: Book[];
+  updateBooks: (books: Book[]) => void;
+}
 
 interface State {
   books: Book[];
   selectedBook: Book | null;
 }
 
-export class BookOverview extends Component<Props, State> {
+class BookOverviewComponent extends Component<Props, State> {
   state: State = {
     books: [],
     selectedBook: null,
   };
 
   componentDidMount(): void {
-    this.setState({
-      books: [
-        {
-          id: 1,
-          authors: "John Example",
-          title: "Example Book",
-        },
-        {
-          id: 2,
-          authors: "Joe Smith",
-          title: "Another Book",
-        },
-      ],
-    });
+    console.log(this.props);
+    this.props.updateBooks([
+      {
+        id: 1,
+        authors: "John Example",
+        title: "Example Book",
+      },
+      {
+        id: 2,
+        authors: "Joe Smith",
+        title: "Another Book",
+      },
+    ]);
   }
 
   selectBook(book: Book): void {
@@ -65,7 +70,7 @@ export class BookOverview extends Component<Props, State> {
                 </tr>
               </thead>
               <tbody>
-                {this.state.books.map((book, index) => (
+                {this.props.books.map((book, index) => (
                   <tr
                     key={book.id}
                     className={this.isBookSelected(book) ? "table-active" : ""}
@@ -93,3 +98,16 @@ export class BookOverview extends Component<Props, State> {
     );
   }
 }
+const mapStateToProps = (state: ReduxState) => ({
+  books: state.books,
+});
+const mapDispatchToProps = (dispatch: any) => {
+  return {
+    updateBooks: (books: Book[]) => dispatch(actions.updateBooks(books)),
+  };
+};
+
+export const BookOverview = connect(
+  mapStateToProps,
+  mapDispatchToProps,
+)(BookOverviewComponent);
