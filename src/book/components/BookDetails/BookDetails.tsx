@@ -1,4 +1,4 @@
-import React, { Component, SyntheticEvent } from "react";
+import React from "react";
 import { Book } from "../../Book";
 import styles from "./BookDetails.module.scss";
 import { Field, FieldProps, Form, Formik } from "formik";
