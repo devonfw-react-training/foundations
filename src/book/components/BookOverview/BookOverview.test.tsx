@@ -1,8 +1,10 @@
 import React from "react";
 import { act } from "react-dom/test-utils";
 import { mount } from "enzyme";
+import { match } from "react-router-dom";
 import { BookOverview } from "./BookOverview";
 import { BookContext } from "../../services/BooksService";
+import { createLocation, createMemoryHistory } from "history";
 
 const books = [
   {
@@ -20,8 +22,17 @@ const books = [
 const bookServiceMock = {
   findAll: () => Promise.resolve(books),
 };
+const history = createMemoryHistory();
 const setupWrapper = () => {
-  return mount(<BookOverview />, {
+  const path = `/book-app/books`;
+  const match: match = {
+    isExact: false,
+    path,
+    url: path,
+    params: {},
+  };
+  const location = createLocation(match.url);
+  return mount(<BookOverview history={history} location={location} match={match}/>, {
     wrappingComponent: BookContext.Provider,
     wrappingComponentProps: {
       value: bookServiceMock,
@@ -83,9 +94,11 @@ describe("Book Overview Component", () => {
     expect(johnExampleTitleCell).toHaveText(books[0].title);
   });
 
-  it("renders details upon click on the row", async () => {
+  it("change path after row click", async () => {
     // given
     const wrapper = setupWrapper();
+    history.push = jest.fn()
+
     // when
     await act(async () => {
       await jest.runAllImmediates();
@@ -94,12 +107,9 @@ describe("Book Overview Component", () => {
     const johnExampleRow = wrapper.find("table tbody tr").at(0);
     // when
     johnExampleRow.simulate("click");
-    // then
-    const bookDetails = wrapper.find("div.row > div").at(1);
 
-    const authors = bookDetails.find("input#authors");
-    const title = bookDetails.find("input#title");
-    expect(authors.prop("value")).toBe(books[0].authors);
-    expect(title.prop("value")).toBe(books[0].title);
+    // then
+    // then
+    expect(history.push).toHaveBeenCalled();
   });
 });

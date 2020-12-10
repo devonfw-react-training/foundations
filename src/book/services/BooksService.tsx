@@ -1,4 +1,4 @@
-import React, { useState, createContext, useContext, FC } from "react";
+import React, { createContext, FC, useContext, useState } from "react";
 import { Book, BookProperties } from "../Book";
 
 export interface BookService {
@@ -26,7 +26,7 @@ export const BookProvider: FC = (props) => {
       title: "Another Book",
     },
   ]);
-  let sequencer: number = 3;
+  let sequencer: number = books.length + 1;
 
   const findAll: BookService["findAll"] = () => {
     return delay(2000).then(() => [...books]);
@@ -40,7 +40,7 @@ export const BookProvider: FC = (props) => {
   };
   const save: BookService["save"] = (bookToSave) => {
     const id = bookToSave.id;
-    if (id != null) {
+    if (id) {
       const book = books.find((book) => book.id === id);
       if (book) {
         Object.assign(book, bookToSave);
@@ -51,13 +51,13 @@ export const BookProvider: FC = (props) => {
   };
   const saveNew: BookService["saveNew"] = (bookToSave) => {
     const savedBook = { ...bookToSave, id: nextId() };
-    setBooks([...books, savedBook]);
+    setBooks( [...books, savedBook]);
     return savedBook;
   };
   const saveNewAndFindOne = (bookToSave: BookProperties) => {
-    const { id } = saveNew(bookToSave);
-    return findOne(id!);
+    return Promise.resolve(saveNew(bookToSave));
   };
+
   const nextId = () => sequencer++;
   return (
     <BookContext.Provider

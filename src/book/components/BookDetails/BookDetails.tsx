@@ -1,80 +1,70 @@
-import React, { Component, SyntheticEvent } from "react";
-import { Book } from "../../Book";
+import React, { FunctionComponent, SyntheticEvent, useEffect, useState } from "react";
 import styles from "./BookDetails.module.scss";
+import { RouteComponentProps } from "react-router-dom";
+import { useBookService } from "../../services/BooksService";
 
-export interface Props {
-  book: Book;
-  onBookChange?: (book: Book) => void;
+interface RouteProps {
+  id?: string
 }
 
-interface State extends Book {}
+export const BookDetails: FunctionComponent<RouteComponentProps<RouteProps>> = ({ history, match: { params: { id } } }) => {
+  const { save, findOne } = useBookService();
+  const [authors, setAuthors] = useState<string>("");
+  const [title, setTitle] = useState<string>("");
+  const [bookId, setBookId] = useState<number | undefined>(undefined);
 
-export class BookDetails extends Component<Props, State> {
-  state: State = {
-    ...this.props.book,
-  };
-
-  updateTitleValue = (event: SyntheticEvent) => {
-    const title = getValueFromInputChangeEvent(event);
-    this.setState({ title });
-  };
-
-  updateAuthorsValue = (event: SyntheticEvent) => {
-    const authors = getValueFromInputChangeEvent(event);
-    this.setState({ authors });
-  };
-
-  notifyOnBookChange = (event: SyntheticEvent) => {
-    event.preventDefault();
-    if (this.props.onBookChange) {
-      this.props.onBookChange({ ...this.state });
+  React.useEffect(() => {
+    if (id) {
+      findOne(+id).then(book => {
+        setAuthors(book.authors);
+        setTitle(book.title);
+        setBookId(book.id);
+      });
     }
+  }, []);
+
+  const submit = (event: SyntheticEvent) => {
+    event.preventDefault();
+    save({ authors, title, id: bookId }).then(() => history.push("/book-app/books"));
   };
 
-  render(): React.ReactNode {
-    return (
-      <div className={styles.form}>
-        <form onSubmit={this.notifyOnBookChange}>
-          <div className="form-group row">
-            <label htmlFor="authors" className="col-sm-3 col-form-label">
-              Authors:
-            </label>
-            <div className="col-sm-9">
-              <input
-                id="authors"
-                type="text"
-                className="form-control"
-                value={this.state.authors}
-                onChange={this.updateAuthorsValue}
-              />
-            </div>
+  return (
+    <div className={`${styles.form} container`}>
+      <form onSubmit={submit}>
+        <div className="form-group row">
+          <label htmlFor="authors" className="col-sm-3 col-form-label">
+            Authors:
+          </label>
+          <div className="col-sm-9">
+            <input
+              id="authors"
+              type="text"
+              className="form-control"
+              value={authors}
+              onChange={event => setAuthors(event.target.value)}
+            />
           </div>
-          <div className="form-group row">
-            <label htmlFor="title" className="col-sm-3 col-form-label">
-              Title:
-            </label>
-            <div className="col-sm-9">
-              <input
-                id="title"
-                type="text"
-                className="form-control"
-                value={this.state.title}
-                onChange={this.updateTitleValue}
-              />
-            </div>
+        </div>
+        <div className="form-group row">
+          <label htmlFor="title" className="col-sm-3 col-form-label">
+            Title:
+          </label>
+          <div className="col-sm-9">
+            <input
+              id="title"
+              type="text"
+              className="form-control"
+              value={title}
+              onChange={event => setTitle(event.target.value)}
+            />
           </div>
-          <div className="form-group row">
-            <div className="offset-sm-3 col-sm-9">
-              <button className="btn btn-primary">Apply</button>
-            </div>
+        </div>
+        <div className="form-group row">
+          <div className="offset-sm-3 col-sm-9">
+            <button className="btn btn-primary">Apply</button>
           </div>
-        </form>
-      </div>
-    );
-  }
-}
-
-function getValueFromInputChangeEvent(event: SyntheticEvent) {
-  const inputElement = event.target as HTMLInputElement;
-  return inputElement.value;
-}
+        </div>
+      </form>
+    </div>
+  );
+};
