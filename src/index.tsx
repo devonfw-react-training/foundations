@@ -1,5 +1,4 @@
 // Polyfills
-import "react-app-polyfill/ie11"; //imports core-js/es6/symbol and core-js/fn/array/from'
 
 import "core-js/es6/object";
 import "core-js/es6/function";

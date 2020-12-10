@@ -1,56 +1,60 @@
 import React from "react";
-import ReactDOM from "react-dom";
-import { mount, ReactWrapper, shallow, ShallowWrapper } from "enzyme";
+import { act } from "react-dom/test-utils";
+import { mount } from "enzyme";
 import { BookOverview } from "./BookOverview";
+import { BookContext } from "../../services/BooksService";
+
+const books = [
+  {
+    id: 1,
+    authors: "John Example",
+    title: "Example Book",
+  },
+  {
+    id: 2,
+    authors: "Joe Smith",
+    title: "Another Book",
+  },
+];
+
+const bookServiceMock = {
+  findAll: () => Promise.resolve(books),
+};
+const setupWrapper = () => {
+  return mount(<BookOverview />, {
+    wrappingComponent: BookContext.Provider,
+    wrappingComponentProps: {
+      value: bookServiceMock,
+    },
+  });
+};
 
 describe("Book Overview Component", () => {
-  const books = [
-    {
-      id: 1,
-      authors: "John Example",
-      title: "Example Book",
-    },
-    {
-      id: 2,
-      authors: "Joe Smith",
-      title: "Another Book",
-    },
-  ];
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
 
-  it("renders without crashing", () => {
+  it("renders the master table", async () => {
     // given
-    const div = document.createElement("div");
+    const wrapper = setupWrapper();
     // when
-    ReactDOM.render(<BookOverview />, div);
-    // then no errors thrown
-    ReactDOM.unmountComponentAtNode(div);
-  });
-
-  it("sets the books after mounting", () => {
-    // when
-    const wrapper = shallow(<BookOverview />);
-    // then
-    expect(wrapper).toHaveState("books", books);
-  });
-
-  it("sets the selectedBook to null after mounting", () => {
-    // when
-    const wrapper = shallow(<BookOverview />);
-    // then
-    expect(wrapper).toHaveState("selectedBook", null);
-  });
-
-  it("renders the master table", () => {
-    // when
-    const wrapper = shallow(<BookOverview />);
+    await act(async () => {
+      await jest.runAllImmediates();
+      wrapper.update();
+    });
     // then
     const masterTable = wrapper.find("table");
     expect(masterTable).toExist();
   });
 
-  it("renders the master table having three columns", () => {
+  it("renders the master table having three columns", async () => {
+    // given
+    const wrapper = setupWrapper();
     // when
-    const wrapper = shallow(<BookOverview />);
+    await act(async () => {
+      await jest.runAllImmediates();
+      wrapper.update();
+    });
     // then
     const masterTable = wrapper.find("table");
     const columns = masterTable.find("thead tr th");
@@ -60,9 +64,14 @@ describe("Book Overview Component", () => {
     expect(columns.at(2)).toHaveText("Title");
   });
 
-  it("renders the master table rows", () => {
+  it("renders the master table rows", async () => {
+    // given
+    const wrapper = setupWrapper();
     // when
-    const wrapper = shallow(<BookOverview />);
+    await act(async () => {
+      await jest.runAllImmediates();
+      wrapper.update();
+    });
     // then
     const masterTable = wrapper.find("table");
     const rows = masterTable.find("tbody tr");
@@ -74,33 +83,14 @@ describe("Book Overview Component", () => {
     expect(johnExampleTitleCell).toHaveText(books[0].title);
   });
 
-  it("updates the state upon click on the row", () => {
+  it("renders details upon click on the row", async () => {
     // given
-    const wrapper = shallow(<BookOverview />);
-    const johnExampleRow = wrapper.find("table tbody tr").at(0);
+    const wrapper = setupWrapper();
     // when
-    johnExampleRow.simulate("click");
-    // then
-    expect(wrapper).toHaveState("selectedBook", books[0]);
-  });
-
-  it("selects a table row upon its click", () => {
-    // given
-    const wrapper = shallow(<BookOverview />);
-    const johnExampleRow = findJohnExampleRowFrom(wrapper);
-    // when
-    johnExampleRow.simulate("click");
-    // then
-    expect(findJohnExampleRowFrom(wrapper)).toHaveClassName("table-active");
-
-    function findJohnExampleRowFrom(wrapper: ShallowWrapper<any, any>) {
-      return wrapper.find("table tbody tr").at(0);
-    }
-  });
-
-  it("renders details upon click on the row", () => {
-    // given
-    const wrapper = mount(<BookOverview />);
+    await act(async () => {
+      await jest.runAllImmediates();
+      wrapper.update();
+    });
     const johnExampleRow = wrapper.find("table tbody tr").at(0);
     // when
     johnExampleRow.simulate("click");
@@ -111,32 +101,5 @@ describe("Book Overview Component", () => {
     const title = bookDetails.find("input#title");
     expect(authors.prop("value")).toBe(books[0].authors);
     expect(title.prop("value")).toBe(books[0].title);
-  });
-
-  it("updates a book row upon changes done in the details", () => {
-    // given
-    const wrapper = mount(<BookOverview />);
-    // select the first row
-    const johnExampleRow = findFirstTableRowFrom(wrapper);
-    johnExampleRow.simulate("click");
-    // update authors in the details
-    const bookDetails = wrapper.find("div.row > div").at(1);
-    const authors = bookDetails.find("input#authors");
-    const newAuthor = "New Author";
-    authors.simulate("change", { target: { value: newAuthor } });
-    const form = bookDetails.find("form");
-    // when
-    form.simulate("submit", { preventDefault: jest.fn() });
-    // then
-    const updatedFirstRow = findFirstTableRowFrom(wrapper);
-    const authorsTableCell = updatedFirstRow.find("td").at(0);
-    expect(authorsTableCell).toHaveText(newAuthor);
-
-    const titleTableCell = updatedFirstRow.find("td").at(1);
-    expect(titleTableCell).toHaveText(books[0].title);
-
-    function findFirstTableRowFrom(wrapper: ReactWrapper) {
-      return wrapper.find("table tbody tr").at(0);
-    }
   });
 });
