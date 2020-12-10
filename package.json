@@ -15,11 +15,14 @@
     "redux-devtools-extension": "^2.13.8"
   },
   "scripts": {
-    "start": "react-scripts start",
+    "start": "npm-run-all --parallel start-backend start-client",
+    "start-client": "react-scripts start",
     "build": "react-scripts build",
     "pretty": "prettier --write \"./**/*.{js,jsx,json,ts,tsx}\"",
     "test": "react-scripts test",
     "test:debug": "react-scripts --inspect-brk test --no-cache --verbose=false --runInBand",
+    "start-backend": "ts-node --project ./tsconfig.server.json ./server/server.ts",
+    "start-backend:debug": "ts-node %NODE_DEBUG_OPTION% --project ./tsconfig.server.json ./server/server.ts",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {

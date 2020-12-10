@@ -1,10 +1,11 @@
 import { BooksService } from "./BooksService";
+import { LocalBooksService } from "./LocalBooksService";
 
-describe("BookService", () => {
+describe("LocalBooksService", () => {
   let bookService: BooksService;
 
   beforeEach(() => {
-    bookService = new BooksService();
+    bookService = new LocalBooksService();
     jest.useFakeTimers();
   });
 
