@@ -1,51 +1,48 @@
 import React, { Component, SyntheticEvent } from "react";
 import { Book } from "../../Book";
 import styles from "./BookDetails.module.scss";
+import { Field, FieldProps, Form, Formik } from "formik";
 
-interface Props {
-  book: Book;
-  onBookChange?: (book: Book) => void;
+function isEmptyInputValue(value: any) {
+  // we don't check for string here so it also works with arrays
+  return value == null || value.length === 0;
 }
 
-type State = Book;
-
-export class BookDetails extends Component<Props, State> {
-  state: State = {
-    ...this.props.book,
-  };
-
-  updateTitleValue = (event: SyntheticEvent) => {
-    const title = getValueFromInputChangeEvent(event);
-    this.setState({ title });
-  };
-
-  updateAuthorsValue = (event: SyntheticEvent) => {
-    const authors = getValueFromInputChangeEvent(event);
-    this.setState({ authors });
-  };
-
-  notifyOnBookChange = (event: SyntheticEvent) => {
-    event.preventDefault();
-    if (this.props.onBookChange) {
-      this.props.onBookChange({ ...this.state });
+function notEmptyAndMaxLengthOf(maxLength: number) {
+  return (value: any) => {
+    if (isEmptyInputValue(value)) {
+      return "Please provide a value!";
+    } else if (value.length != null && value.length > maxLength) {
+      return `Please provide a value not longer than ${maxLength} characters!`;
     }
   };
+}
 
-  render(): React.ReactNode {
-    return (
-      <div className={`${styles.form} container`}>
-        <form onSubmit={this.notifyOnBookChange}>
+export interface Props {
+  book: Book;
+  onBookChange?: (book: Book) => Promise<any>;
+}
+
+export const BookDetails = (props: Props) => (
+  <div className={`${styles.form} container`}>
+    <Formik
+      initialValues={props.book}
+      onSubmit={(values: Book, { setSubmitting }) => {
+        if (props.onBookChange) {
+          props.onBookChange({ ...values }).then(() => setSubmitting(false));
+        }
+      }}
+      render={() => (
+        <Form>
           <div className="form-group row">
             <label htmlFor="authors" className="col-sm-4 col-form-label">
               Authors:
             </label>
             <div className="col-sm-8">
-              <input
-                id="authors"
-                type="text"
-                className="form-control"
-                value={this.state.authors}
-                onChange={this.updateAuthorsValue}
+              <Field
+                name="authors"
+                component={BookDetailsInputComponent}
+                validate={notEmptyAndMaxLengthOf(15)}
               />
             </div>
           </div>
@@ -54,27 +51,42 @@ export class BookDetails extends Component<Props, State> {
               Title:
             </label>
             <div className="col-sm-8">
-              <input
-                id="title"
-                type="text"
-                className="form-control"
-                value={this.state.title}
-                onChange={this.updateTitleValue}
+              <Field
+                name="title"
+                component={BookDetailsInputComponent}
+                validate={notEmptyAndMaxLengthOf(50)}
               />
             </div>
           </div>
           <div className="form-group row">
             <div className="offset-sm-4 col-sm-9">
-              <button className="btn btn-primary">Apply</button>
+              <button type="submit" className="btn btn-primary">
+                Apply
+              </button>
             </div>
           </div>
-        </form>
-      </div>
-    );
-  }
-}
+        </Form>
+      )}
+    />
+  </div>
+);
 
-function getValueFromInputChangeEvent(event: SyntheticEvent) {
-  const inputElement = event.target as HTMLInputElement;
-  return inputElement.value;
-}
+const BookDetailsInputComponent = ({
+  field,
+  form: { touched, errors },
+  ...props
+}: FieldProps) => (
+  <div>
+    <input
+      type="text"
+      className={`form-control ${
+        touched[field.name] && errors[field.name] ? "is-invalid" : ""
+      }`}
+      {...field}
+      {...props}
+    />
+    {touched[field.name] && errors[field.name] && (
+      <div className="invalid-feedback">{errors[field.name]}</div>
+    )}
+  </div>
+);

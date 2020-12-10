@@ -1,7 +1,8 @@
 import React from "react";
 import ReactDOM from "react-dom";
-import { shallow } from "enzyme";
+import { mount } from "enzyme";
 import { BookDetails } from "./BookDetails";
+import { Book, BookProperties } from "../../Book";
 
 describe("Book Details Component", () => {
   const currentBook = {
@@ -19,58 +20,76 @@ describe("Book Details Component", () => {
     ReactDOM.unmountComponentAtNode(div);
   });
 
-  it("initializes the state from props", () => {
-    // when
-    const wrapper = shallow(<BookDetails book={currentBook} />);
-    // then
-    expect(wrapper).toHaveState(currentBook);
-  });
-
   it("renders authors with a label", () => {
+    // given
+    const wrapper = mount(<BookDetails book={currentBook} />);
     // when
-    const wrapper = shallow(<BookDetails book={currentBook} />);
+    wrapper.update();
     // then
     const label = wrapper.find('label[htmlFor="authors"]');
-    const authors = wrapper.find("input#authors");
+    const authors = wrapper.find('input[name="authors"]');
     expect(label).toHaveText("Authors:");
     expect(authors.prop("value")).toBe(currentBook.authors);
   });
 
   it("renders a title with a label", () => {
+    // given
+    const wrapper = mount(<BookDetails book={currentBook} />);
     // when
-    const wrapper = shallow(<BookDetails book={currentBook} />);
+    wrapper.update();
     // then
     const label = wrapper.find('label[htmlFor="title"]');
-    const title = wrapper.find("input#title");
+    const title = wrapper.find('input[name="title"]');
     expect(label).toHaveText("Title:");
     expect(title.prop("value")).toBe(currentBook.title);
   });
 
-  it("updates the state upon input change", () => {
-    // given
-    const wrapper = shallow(<BookDetails book={currentBook} />);
-    const title = wrapper.find("input#authors");
-    const newAuthor = "New Author";
-    // when
-    title.simulate("change", { target: { value: newAuthor } });
-    // then
-    expect(wrapper).toHaveState("authors", newAuthor);
-  });
-
   it("calls back passing updated book upon form submit", () => {
     // given
-    const callbackMock = jest.fn();
-    const wrapper = shallow(
-      <BookDetails book={currentBook} onBookChange={callbackMock} />,
+    expect.hasAssertions();
+    const onBookChangeSpy = jest.fn((book: Book | BookProperties) =>
+      Promise.resolve(book),
     );
-    const title = wrapper.find("input#authors");
-    const newAuthor = "New Author";
-    title.simulate("change", { target: { value: newAuthor } });
+    const onBookChangeAsyncTest = asyncTestFor(onBookChangeSpy);
+    const wrapper = mount(
+      <BookDetails
+        book={currentBook}
+        onBookChange={onBookChangeAsyncTest.getFn()}
+      />,
+    );
     const form = wrapper.find("form");
     // when
     form.simulate("submit", { preventDefault: jest.fn() });
-    // then
-    const expectedUpdatedBook = { ...currentBook, authors: newAuthor };
-    expect(callbackMock).toBeCalledWith(expectedUpdatedBook);
+
+    return onBookChangeAsyncTest.afterFnHaveBeenCalled().then(() => {
+      // then
+      expect(onBookChangeSpy).toBeCalledWith(currentBook);
+    });
   });
 });
+
+export function asyncTestFor(fn: (...args: any[]) => Promise<any>) {
+  let fnPromise: Promise<any> | undefined;
+  let notifyOnFnAlreadyCalled: (() => void) | undefined;
+
+  return {
+    getFn() {
+      return (...args: any[]): Promise<any> => {
+        return (fnPromise = fn
+          .apply(null, args)
+          .then((fnPromiseResult: any) => {
+            if (notifyOnFnAlreadyCalled) {
+              notifyOnFnAlreadyCalled();
+            }
+            return fnPromiseResult;
+          }));
+      };
+    },
+
+    afterFnHaveBeenCalled(): Promise<any> {
+      return new Promise((resolve) => (notifyOnFnAlreadyCalled = resolve)).then(
+        () => fnPromise,
+      );
+    },
+  };
+}
