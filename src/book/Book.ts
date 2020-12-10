@@ -1,7 +1,5 @@
 export interface Book {
-  id: number;
+  id?: number;
   title: string;
   authors: string;
 }
-
-export type BookProperties = Pick<Book, "authors" | "title">;
