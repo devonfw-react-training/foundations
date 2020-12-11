@@ -19,7 +19,7 @@ export class BooksService {
 
   findAll(): Promise<Book[]> {
     return new Promise((resolve) =>
-      setTimeout(() => resolve([...this.books]), 2000),
+      setTimeout(() => resolve([...this.books]), 20),
     );
   }
 
@@ -36,7 +36,7 @@ export class BooksService {
           bookCopy
             ? resolve(bookCopy)
             : reject(`book with id: ${id} not found`),
-        1000,
+        10,
       ),
     );
   }
